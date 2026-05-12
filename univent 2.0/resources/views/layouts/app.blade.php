@@ -51,16 +51,15 @@
                                 </a>
                             @endif
                         @endauth
-
                     </div>
                 </div>
 
+                {{-- Bagian Kanan Desktop --}}
                 <div class="hidden md:flex items-center gap-4">
                     @auth
-                        {{-- Tombol Upgrade Desktop (Di samping profil) --}}
+                        {{-- Tombol Upgrade Desktop --}}
                         @if(auth()->user()->hasRole('user') && !auth()->user()->hasRole('eo') && !auth()->user()->hasRole('admin'))
                             @if(auth()->user()->eo_request_status === 'none' || auth()->user()->eo_request_status === 'rejected')
-                                <!-- KODE YANG DIUBAH: Menggunakan $dispatch untuk memanggil modal -->
                                 <button @click="$dispatch('open-modal-eo')" class="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-red-600 to-pink-500 text-white text-xs font-extrabold shadow-lg shadow-pink-500/30 hover:scale-105 transition-all active:scale-95">
                                     <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                                     Upgrade EO
@@ -73,7 +72,7 @@
                             @endif
                         @endif
 
-                        {{-- Dropdown Profile --}}
+                        {{-- Dropdown Profile (Dipindah ke Kiri Lonceng) --}}
                         <div class="relative">
                             <button @click="profileMenu = !profileMenu" class="flex items-center gap-3 p-1 rounded-full hover:bg-slate-100 transition focus:outline-none">
                                 <span class="text-sm font-bold text-slate-700 ml-2">{{ Auth::user()->name }}</span>
@@ -85,10 +84,8 @@
                                     @endif
                                 </div>
                             </button>
-                            <div x-show="profileMenu" @click.away="profileMenu = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl shadow-slate-200/50 py-2 border border-slate-100">
+                            <div x-show="profileMenu" @click.away="profileMenu = false" x-transition x-cloak class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl shadow-slate-200/50 py-2 border border-slate-100 z-50">
                                 <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 font-medium">My Profile</a>
-                                
-                                {{-- KODE BARU: Tambahan Event History di Dropdown --}}
                                 <a href="{{ route('user.event.history') }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 font-medium">Event History</a>
                                 
                                 @if(Auth::user()->isAdmin())
@@ -101,13 +98,130 @@
                                 </form>
                             </div>
                         </div>
+
+                        {{-- 🔔 FITUR NOTIFIKASI WEB (DESKTOP) (Sekarang di Kanan) --}}
+                        <div class="relative flex items-center" x-data="{ openNotif: false }">
+                            <button @click="openNotif = !openNotif" class="relative p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all focus:outline-none">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                </svg>
+                                
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <span class="absolute top-1 right-1 flex h-3 w-3">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-600 border-2 border-white"></span>
+                                    </span>
+                                @endif
+                            </button>
+
+                            {{-- Dropdown Notif --}}
+                            <div x-show="openNotif" @click.away="openNotif = false" x-cloak
+                                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95 translate-y-2" x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                                 class="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 z-50 overflow-hidden cursor-default">
+                                
+                                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
+                                    <h3 class="font-bold text-slate-800 text-sm">Notifikasi</h3>
+                                    @if(auth()->user()->unreadNotifications->count() > 0)
+                                        <form action="{{ route('notifications.markAllRead') }}" method="POST" class="m-0">
+                                            @csrf
+                                            <button type="submit" class="text-[11px] text-red-600 hover:text-red-800 font-bold hover:underline">Tandai sudah dibaca</button>
+                                        </form>
+                                    @endif
+                                </div>
+
+                                <div class="max-h-[350px] overflow-y-auto">
+                                    @if(auth()->user()->unreadNotifications->count() > 0)
+                                        @foreach(auth()->user()->unreadNotifications as $notification)
+                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition">
+                                                <div class="flex gap-3">
+                                                    <div class="flex-shrink-0 mt-1">
+                                                        @if(isset($notification->data['status']) && $notification->data['status'] == 'approved')
+                                                            <div class="w-8 h-8 rounded-full bg-green-100 text-green-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></div>
+                                                        @elseif(isset($notification->data['status']) && $notification->data['status'] == 'pending')
+                                                            <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                                                        @else
+                                                            <div class="w-8 h-8 rounded-full bg-red-100 text-red-500 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                                                        @endif
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-sm text-slate-700 leading-snug">{!! $notification->data['message'] ?? 'Ada pembaruan.' !!}</p>
+                                                        <span class="text-[10px] font-bold text-slate-400 mt-1 block uppercase tracking-wider">{{ $notification->created_at->diffForHumans() }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <div class="p-8 text-center flex flex-col items-center justify-center">
+                                            <svg class="w-10 h-10 text-slate-200 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                            <p class="text-slate-400 text-xs font-bold">Belum ada notifikasi baru.</p>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     @else
                         <a href="{{ route('login') }}" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-pink-500 text-white text-sm font-bold shadow-lg shadow-pink-500/25 transition hover:scale-105 active:scale-95">Login</a>
                     @endauth
                 </div>
 
-                {{-- Hamburger Button --}}
-                <div class="md:hidden flex items-center">
+                {{-- Hamburger Button & Notif Mobile --}}
+                <div class="md:hidden flex items-center gap-4">
+                    @auth
+                        {{-- ========================================== --}}
+                        {{-- 🔔 FITUR NOTIFIKASI WEB (MOBILE)           --}}
+                        {{-- ========================================== --}}
+                        <div class="relative flex items-center" x-data="{ openNotifMob: false }">
+                            <button @click="openNotifMob = !openNotifMob" class="relative text-slate-500 hover:text-red-600 focus:outline-none">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                                @if(auth()->user()->unreadNotifications->count() > 0)
+                                    <span class="absolute top-0 right-0 flex h-2.5 w-2.5 -mt-0.5 -mr-0.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white"></span>
+                                    </span>
+                                @endif
+                            </button>
+
+                            <div x-show="openNotifMob" @click.away="openNotifMob = false" x-cloak class="absolute right-0 top-10 w-[85vw] max-w-sm bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden">
+                                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                    <h3 class="font-bold text-slate-800 text-sm">Notifikasi</h3>
+                                    @if(auth()->user()->unreadNotifications->count() > 0)
+                                        <form action="{{ route('notifications.markAllRead') }}" method="POST" class="m-0">
+                                            @csrf
+                                            <button type="submit" class="text-[11px] text-red-600 font-bold">Tandai dibaca</button>
+                                        </form>
+                                    @endif
+                                </div>
+                                <div class="max-h-80 overflow-y-auto">
+                                    @if(auth()->user()->unreadNotifications->count() > 0)
+                                        @foreach(auth()->user()->unreadNotifications as $notification)
+                                            <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition">
+                                                <div class="flex gap-3">
+                                                    <div class="flex-shrink-0 mt-1">
+                                                        @if(isset($notification->data['status']) && $notification->data['status'] == 'approved')
+                                                            <div class="w-7 h-7 rounded-full bg-green-100 text-green-500 flex items-center justify-center"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg></div>
+                                                        @elseif(isset($notification->data['status']) && $notification->data['status'] == 'pending')
+                                                            <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-500 flex items-center justify-center"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                                                        @else
+                                                            <div class="w-7 h-7 rounded-full bg-red-100 text-red-500 flex items-center justify-center"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                                                        @endif
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-sm text-slate-700 leading-snug">{!! $notification->data['message'] ?? 'Ada pembaruan.' !!}</p>
+                                                        <span class="text-[10px] font-bold text-slate-400 mt-1 block">{{ $notification->created_at->diffForHumans() }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <div class="p-6 text-center">
+                                            <p class="text-slate-400 text-xs font-bold">Belum ada notifikasi.</p>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endauth
+
                     <button @click="mobileMenu = !mobileMenu" class="text-slate-600 hover:text-red-500 focus:outline-none">
                         <svg x-show="!mobileMenu" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
                         <svg x-show="mobileMenu" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" x-cloak><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -121,7 +235,7 @@
             <a href="/" class="block text-base font-bold text-slate-700">Home</a>
             <a href="/browse-events" class="block text-base font-bold text-slate-700">Events</a>
             
-            {{-- Form Submit Event Mobile (Hanya untuk EO & Admin) --}}
+            {{-- Form Submit Event Mobile --}}
             @auth
                 @if(auth()->user()->hasRole('eo') || auth()->user()->hasRole('admin'))
                     <a href="{{ route('submit-event.form') }}" class="block text-base font-bold text-slate-700">Submit Event</a>
@@ -130,10 +244,9 @@
 
             <hr class="border-slate-100">
             @auth
-                {{-- Tombol Upgrade Mobile Menu --}}
+                {{-- Tombol Upgrade Mobile --}}
                 @if(auth()->user()->hasRole('user') && !auth()->user()->hasRole('eo') && !auth()->user()->hasRole('admin'))
                     @if(auth()->user()->eo_request_status === 'none' || auth()->user()->eo_request_status === 'rejected')
-                        <!-- KODE YANG DIUBAH: Menggunakan $dispatch untuk memanggil modal -->
                         <button @click="$dispatch('open-modal-eo')" class="w-full text-left flex items-center gap-2 text-base font-extrabold text-red-600 mb-4">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                             Upgrade to Event Organizer
@@ -167,8 +280,6 @@
                 <h4 class="font-bold mb-6">Quick Links</h4>
                 <ul class="space-y-3 text-slate-400 text-sm">
                     <li><a href="/browse-events" class="hover:text-red-400 transition">Browse Events</a></li>
-                    
-                    {{-- Form Submit Event Footer (Hanya untuk EO & Admin) --}}
                     @auth
                         @if(auth()->user()->hasRole('eo') || auth()->user()->hasRole('admin'))
                             <li><a href="{{ route('submit-event.form') }}" class="hover:text-red-400 transition">Submit Event</a></li>
@@ -278,6 +389,7 @@
             </div>
         @endif
     @endauth
+    
     {{-- Floating Action Button (FAB) Contact Us --}}
     <div class="fixed bottom-6 right-6 z-50" x-data="{ hover: false }">
         <div x-show="hover" 

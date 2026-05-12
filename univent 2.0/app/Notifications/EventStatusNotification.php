@@ -28,7 +28,7 @@ class EventStatusNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     /**
@@ -54,5 +54,15 @@ class EventStatusNotification extends Notification
         }
 
         return $mail->line('Terima kasih telah menggunakan Univent!');
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        $statusText = $this->status === 'approved' ? 'Disetujui' : 'Ditolak';
+        
+        return [
+            'status' => $this->status,
+            'message' => 'Event Anda <b>"' . $this->event->event_title . '"</b> telah <b>' . $statusText . '</b> oleh Admin.',
+        ];
     }
 }

@@ -146,6 +146,12 @@ class EventController extends Controller
                 'status' => 'pending',
             ]);
         }
+        
+        // --- TAMBAHAN NOTIFIKASI KE ADMIN ---
+        // Cari akun admin (berdasarkan ID 1 dari database-mu)
+        $admins = \App\Models\User::where('id', 1)->get(); 
+        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewEventSubmittedNotification($event));
+        // ------------------------------------
 
         return redirect()->route('dashboard')->with('success', 'Event berhasil disubmit dan terdaftar!');
     }

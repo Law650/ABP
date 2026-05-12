@@ -136,6 +136,11 @@ class ProfileController extends Controller
             $user->eo_request_status = 'pending';
             $user->save();
 
+            // --- TAMBAHAN NOTIFIKASI KE ADMIN ---
+            $admins = \App\Models\User::where('id', 1)->get();
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewEoRequestNotification($user));
+            // ------------------------------------
+
             return back()->with('success', 'Formulir berhasil dikirim! Silakan tunggu Admin menghubungi Anda.');
         }
 
@@ -190,6 +195,10 @@ class ProfileController extends Controller
             $user->roles()->attach($roleEo->id);
         }
 
+        // --- TAMBAHAN NOTIFIKASI KE USER ---
+        $user->notify(new \App\Notifications\EoRequestStatusNotification('approved'));
+        // -----------------------------------
+
         return back()->with('success', 'Pengajuan EO berhasil disetujui!');
     }
 
@@ -203,6 +212,10 @@ class ProfileController extends Controller
         // Ubah status menjadi rejected
         $user->eo_request_status = 'rejected';
         $user->save();
+
+        // --- TAMBAHAN NOTIFIKASI KE USER ---
+        $user->notify(new \App\Notifications\EoRequestStatusNotification('rejected'));
+        // -----------------------------------
 
         return back()->with('success', 'Pengajuan EO berhasil ditolak.');
     }

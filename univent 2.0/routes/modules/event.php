@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schedule;
+use App\Models\Event;
 
 // ----------------------------------------------------
 // PUBLIC ROUTES (Bisa diakses siapa saja tanpa login)
@@ -35,5 +37,25 @@ Route::middleware('auth')->group(function () {
         // AI Gemini Flash API Endpoint
         Route::post('/generate-description', [EventController::class, 'generateDescription'])->name('event.generate-description');
     });
+
+    // ----------------------------------------------------
+    // NOTIFICATIONS (Tandai semua sebagai sudah dibaca)
+    // ----------------------------------------------------    
+    Route::post('/notifications/mark-read', function () {
+        auth()->user()->unreadNotifications->markAsRead();
+        return back();
+    })->name('notifications.markAllRead')->middleware('auth');
+
+    // ==========================================
+    // FITUR AUTO EXPIRED EVENT SETIAP HARI
+    // ==========================================
+    Schedule::call(function () {
+        
+        // Ubah status event yang sudah lewat batas tanggalnya menjadi 'expired'
+        Event::whereDate('end_date', '<', today())
+            ->whereIn('status', ['approved', 'pending'])
+            ->update(['status' => 'expired']);
+
+    })->daily();    
 
 });
