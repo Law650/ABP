@@ -10,9 +10,23 @@
 
     <div class="max-w-7xl mx-auto relative">
         {{-- Header --}}
-        <div class="mb-10 text-center md:text-left">
-            <h1 class="text-3xl font-extrabold text-slate-900 mb-2 italic tracking-tight">Event List Management</h1>
-            <p class="text-slate-500 font-medium">Kelola event yang disubmit oleh pengguna dan tentukan status penayangannya.</p>
+        <div class="mb-8 text-center md:text-left">
+            <h1 class="text-3xl font-extrabold text-slate-900 mb-2 italic tracking-tight">Admin Workspace</h1>
+            <p class="text-slate-500 font-medium">Kelola seluruh ekosistem Univent dari panel ini.</p>
+        </div>
+
+        {{-- KODE BARU: Menu Pilihan Utama (Switcher) --}}
+        <div class="flex p-1.5 mb-10 bg-slate-200/50 rounded-2xl w-fit border border-slate-200/50">
+            {{-- Tombol Event List (Aktif) --}}
+            <a href="{{ route('admin.event-list') }}" class="px-8 py-3 rounded-xl text-sm font-bold bg-white text-red-600 shadow-sm border border-slate-200 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Event List
+            </a>
+            {{-- Tombol EO Requests (Tidak Aktif) --}}
+            <a href="{{ route('admin.eo-requests') }}" class="px-8 py-3 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-700 transition-all flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                EO Requests
+            </a>
         </div>
 
         {{-- Notifikasi --}}
@@ -23,7 +37,7 @@
             </div>
         @endif
 
-        {{-- Filter Bar Horizontal --}}
+        {{-- Filter Bar Horizontal (Kode Aslimu) --}}
         <div class="flex flex-col md:flex-row items-center justify-start gap-2.5 mb-8 bg-white p-4 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40">
             <div class="w-full md:w-[400px] relative group">
                 <div class="absolute left-4 top-3">
@@ -68,34 +82,34 @@
             </button>
         </div>
 
-        {{-- Nav Tabs --}}
+        {{-- Nav Tabs (Kode Aslimu) --}}
         <div class="flex flex-wrap gap-2 mb-8 bg-slate-200/50 p-1.5 rounded-2xl w-fit border border-slate-200/30">
             <button onclick="showTab(this, 'pending')" id="tab-pending" class="tab-btn px-6 py-2.5 rounded-xl text-sm font-bold transition-all bg-white text-red-600 shadow-sm border border-slate-200">
-                Menunggu <span class="ml-1 opacity-50">({{ $pendingEvents->count() }})</span>
+                Menunggu <span class="ml-1 opacity-50">({{ $pendingEvents->count() ?? 0 }})</span>
             </button>
             <button onclick="showTab(this, 'approved')" id="tab-approved" class="tab-btn px-6 py-2.5 rounded-xl text-sm font-bold transition-all text-slate-500 hover:text-slate-700">
-                Disetujui <span class="ml-1 opacity-50">({{ $approvedEvents->count() }})</span>
+                Disetujui <span class="ml-1 opacity-50">({{ $approvedEvents->count() ?? 0 }})</span>
             </button>
             <button onclick="showTab(this, 'rejected')" id="tab-rejected" class="tab-btn px-6 py-2.5 rounded-xl text-sm font-bold transition-all text-slate-500 hover:text-slate-700">
-                Ditolak <span class="ml-1 opacity-50">({{ $rejectedEvents->count() }})</span>
+                Ditolak <span class="ml-1 opacity-50">({{ $rejectedEvents->count() ?? 0 }})</span>
             </button>
             <button onclick="showTab(this, 'all')" id="tab-all" class="tab-btn px-6 py-2.5 rounded-xl text-sm font-bold transition-all text-slate-500 hover:text-slate-700">
-                Semua <span class="ml-1 opacity-50">({{ $allEvents->count() }})</span>
+                Semua <span class="ml-1 opacity-50">({{ $allEvents->count() ?? 0 }})</span>
             </button>
         </div>
 
         {{-- Tab Contents --}}
         <div id="pending" class="tab-content block">
-            @include('partials.event_table', ['events' => $pendingEvents, 'showActions' => true])
+            @include('partials.event_table', ['events' => $pendingEvents ?? [], 'showActions' => true])
         </div>
         <div id="approved" class="tab-content hidden">
-            @include('partials.event_table', ['events' => $approvedEvents, 'showActions' => false, 'showRevert' => true])
+            @include('partials.event_table', ['events' => $approvedEvents ?? [], 'showActions' => false, 'showRevert' => true])
         </div>
         <div id="rejected" class="tab-content hidden">
-            @include('partials.event_table', ['events' => $rejectedEvents, 'showActions' => false, 'showRevert' => true])
+            @include('partials.event_table', ['events' => $rejectedEvents ?? [], 'showActions' => false, 'showRevert' => true])
         </div>
         <div id="all" class="tab-content hidden">
-            @include('partials.event_table', ['events' => $allEvents, 'showActions' => false, 'showRevert' => true])
+            @include('partials.event_table', ['events' => $allEvents ?? [], 'showActions' => false, 'showRevert' => true])
         </div>
     </div>
 </div>

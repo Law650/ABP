@@ -29,7 +29,15 @@
                     </div>
                     
                     <h3 class="text-2xl font-extrabold text-slate-900 mb-1">{{ $user->name }}</h3>
-                    <p class="text-sm font-bold text-red-500 uppercase tracking-widest">{{ Auth::user()->role ?? 'Student' }}</p>
+                    <p class="text-sm font-bold text-red-500 uppercase tracking-widest">
+                        @if($user->hasRole('admin'))
+                            ADMINISTRATOR
+                        @elseif($user->hasRole('eo'))
+                            EVENT ORGANIZER
+                        @else
+                            USER
+                        @endif
+                    </p>
                     
                     {{-- Quick Stats (Visual Only) --}}
                     <div class="grid grid-cols-2 gap-4 mt-8 w-full">
@@ -92,11 +100,7 @@
 
                     {{-- Actions --}}
                     <div class="mt-12 pt-8 border-t border-slate-50 flex flex-wrap items-center gap-4">
-                        <a href="{{ route('user.event.history') }}" 
-                            class="flex items-center gap-2 px-6 py-3.5 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all text-sm">
-                            <x-heroicon-o-clock class="w-4 h-4" />
-                            Event History
-                        </a>
+                        {{-- Tombol Event History sudah dihapus dari sini --}}
                         
                         <a href="{{ route('profile.edit') }}" 
                             class="flex-1 text-center px-8 py-3.5 bg-gradient-to-r from-red-600 to-pink-500 text-white font-bold rounded-2xl shadow-lg shadow-pink-500/25 hover:scale-105 transition transform active:scale-95 text-sm">

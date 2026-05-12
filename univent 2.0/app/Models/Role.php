@@ -13,13 +13,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class Role extends Model
 {
-    // HAPUS 'use HasFactory' jika tidak punya file database/factories/RoleFactory.php
-    // use HasFactory; 
-
-    protected $fillable = ['name'];
+    // Tambahkan 'guard_name' ke dalam fillable
+    protected $fillable = ['name', 'guard_name'];
 
     /**
-     * @return BelongsToMany<User,$this >
+     * @return BelongsToMany<User, $this>
      */
     public function users(): BelongsToMany
     {

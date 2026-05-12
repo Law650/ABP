@@ -4,21 +4,21 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View; // Import return type
-use Illuminate\Http\RedirectResponse; // Import return type
+use Illuminate\View\View; 
+use Illuminate\Http\RedirectResponse; 
+use App\Models\User;
+use App\Models\Role; // Fix: Menggunakan huruf kapital 'R' untuk standar model Laravel
 
 class ProfileController extends Controller
 {
     /**
      * Menampilkan halaman profil pengguna.
      */
-    // Fix: Tambahkan Return Type
     public function show(): View|RedirectResponse
     {
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
-        // Fix: Pastikan user ada sebelum memanggil load()
         if (! $user) {
             return redirect()->route('login');
         }
@@ -53,17 +53,15 @@ class ProfileController extends Controller
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
 
-        // Fix: Guard clause untuk PHPStan (menangani User|null)
         if (! $user) {
             return redirect()->route('login');
         }
 
-        // Validasi input
         $validated = $request->validate([
-            'name' => 'required|string|max:255  ',
+            'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:15|regex:/^(\+?\d{1,15})$/',
             'birthday' => 'nullable|date',
-            'new_avatar_temp' => 'nullable|string',   // base64
+            'new_avatar_temp' => 'nullable|string',   
             'remove_avatar' => 'nullable|boolean',
         ]);
 
@@ -75,25 +73,17 @@ class ProfileController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        // Jika user klik remove
         if ($request->remove_avatar == 1) {
             $user->avatar = null;
         }
 
-        // Jika user upload avatar baru
-        // Fix: Gunakan $request->input() dan cast ke (string) agar PHPStan senang
         if ($request->filled('new_avatar_temp')) {
-
             $temp = $request->input('new_avatar_temp');
             $base64 = is_string($temp) ? $temp : '';
-            // Jika format masih "data:image/png;base64,xxxx"
-            // PHPStan sekarang tahu $base64 pasti string, jadi str_contains aman
             if (str_contains($base64, ',')) {
                 $parts = explode(',', $base64);
-                // Pastikan array key 1 ada (meskipun biasanya pasti ada di base64 image)
                 $base64 = $parts[1] ?? $base64;
             }
-
             $user->avatar = $base64;
         }
 
@@ -105,7 +95,6 @@ class ProfileController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        // Fix: User sudah dipastikan ada di atas, jadi akses $user->id aman
         $user->profile()->updateOrCreate(
             ['user_id' => $user->id],
             [
@@ -115,5 +104,106 @@ class ProfileController extends Controller
         );
 
         return redirect()->route('profile.edit')->with('success', 'Profile berhasil diperbarui!');
+    }
+
+   /**
+     * Memproses pengajuan user menjadi EO (beserta form verifikasi)
+     */
+    public function requestEoAccess(Request $request): RedirectResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
+
+        // Hanya proses jika statusnya belum pending atau belum disetujui
+        if ($user->eo_request_status === 'none' || $user->eo_request_status === 'rejected') {
+            
+            // 1. Validasi Input Form
+            $validated = $request->validate([
+                'eo_org_type'  => 'required|string|in:Internal Kampus,Eksternal Publik',
+                'eo_org_name'  => 'required|string|max:255',
+                'eo_pic_name'  => 'required|string|max:255',
+                'eo_phone'     => 'required|string|max:20',
+                'eo_instagram' => 'nullable|string|max:255',
+            ]);
+
+            // 2. Simpan Data ke Database & Ubah Status
+            $user->eo_org_type = $validated['eo_org_type'];
+            $user->eo_org_name = $validated['eo_org_name'];
+            $user->eo_pic_name = $validated['eo_pic_name'];
+            $user->eo_phone = $validated['eo_phone'];
+            $user->eo_instagram = $validated['eo_instagram'];
+            
+            $user->eo_request_status = 'pending';
+            $user->save();
+
+            return back()->with('success', 'Formulir berhasil dikirim! Silakan tunggu Admin menghubungi Anda.');
+        }
+
+        return back()->with('error', 'Anda sudah mengajukan akses EO atau sudah menjadi EO.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FUNGSI KHUSUS ADMIN: MANAJEMEN PENGAJUAN EO
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Menampilkan halaman tabel pengajuan EO
+     */
+    public function adminEoRequestList(): View
+    {
+        // Ambil data user yang pernah mengajukan diri menjadi EO (status selain 'none')
+        $allRequests = User::whereIn('eo_request_status', ['pending', 'approved', 'rejected'])->latest()->get();
+        
+        $pendingRequests = User::where('eo_request_status', 'pending')->latest()->get();
+        $approvedRequests = User::where('eo_request_status', 'approved')->latest()->get();
+        $rejectedRequests = User::where('eo_request_status', 'rejected')->latest()->get();
+        
+        return view('admin.eo-requests', compact(
+            'allRequests',
+            'pendingRequests',
+            'approvedRequests',
+            'rejectedRequests'
+        ));
+    }
+
+    /**
+     * Menyetujui pengajuan EO
+     */
+    public function approveEoRequest($id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+        
+        // 1. Update status di tabel users
+        $user->eo_request_status = 'approved';
+        $user->save();
+
+        // 2. Pastikan role 'eo' ada. Jika tidak ada, buat otomatis.
+        $roleEo = \App\Models\Role::firstOrCreate(
+            ['name' => 'eo'],
+            ['guard_name' => 'web']
+        );
+
+        // 3. Pasangkan role ke User ID yang baru ini
+        if (!$user->hasRole('eo')) {
+            $user->roles()->attach($roleEo->id);
+        }
+
+        return back()->with('success', 'Pengajuan EO berhasil disetujui!');
+    }
+
+    /**
+     * Menolak pengajuan EO
+     */
+    public function rejectEoRequest($id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+        
+        // Ubah status menjadi rejected
+        $user->eo_request_status = 'rejected';
+        $user->save();
+
+        return back()->with('success', 'Pengajuan EO berhasil ditolak.');
     }
 }

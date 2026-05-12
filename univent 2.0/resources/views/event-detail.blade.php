@@ -32,11 +32,11 @@
                         {{-- Event Content Card --}}
                         <div class="bg-white rounded-[2.5rem] p-8 md:p-12 border border-slate-100 shadow-xl shadow-slate-200/50">
                             <div class="flex flex-wrap gap-3 mb-6">
-                                <span class="px-4 py-1.5 bg-green-100 text-green-600 text-[11px] font-black uppercase tracking-wider rounded-lg">
-                                    {{ $event->event_category }}
+                                <span class="px-4 py-1.5 bg-green-100 text-green-600 text-[11px] font-black uppercase tracking-wider rounded-full">
+                                    {{ $event->category->name ?? 'Uncategorized' }}
                                 </span>
-                                <span class="px-4 py-1.5 bg-red-100 text-red-600 text-[11px] font-black uppercase tracking-wider rounded-lg">
-                                    {{ ucwords(str_replace('_', ' ', $event->organizer_type)) }}
+                                <span class="px-4 py-1.5 bg-red-100 text-red-600 text-[11px] font-black uppercase tracking-wider rounded-full">
+                                    {{ ucwords(str_replace('_', ' ', $event->organizer_type ?? 'Unknown Organizer')) }}
                                 </span>
                             </div>
 
@@ -46,7 +46,7 @@
                                 <div class="p-2 bg-slate-100 rounded-xl">
                                     <x-heroicon-s-users class="w-5 h-5 text-slate-600" />
                                 </div>
-                                <span class="text-sm tracking-wide">Organized by <span class="text-slate-900">{{ $event->organizer_name }}</span></span>
+                                <span class="text-sm tracking-wide">Organized by <span class="text-slate-900">{{ $event->eventOrganizer->user->eo_org_name ?? 'Unknown Organizer' }}</span></span>
                             </div>
 
                             <div class="h-px w-full bg-slate-100 mb-10"></div>

@@ -17,11 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role' => RoleMiddleware::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'checkTokenExpiry' => CheckTokenExpiry::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -38,20 +38,41 @@
 
                         {{-- Jelajah Event --}}
                         <a href="{{ route('events.browse') }}" 
-                        class="text-sm font-bold transition-all duration-300 {{ request()->routeIs('browse-events') ? 'text-red-600' : 'text-slate-600 hover:text-red-500' }}">
+                        class="text-sm font-bold transition-all duration-300 {{ request()->routeIs('events.browse') ? 'text-red-600' : 'text-slate-600 hover:text-red-500' }}">
                             Events
                         </a>
 
-                        {{-- Form Submit Event --}}
-                        <a href="{{ route('submit-event.form') }}" 
-                        class="text-sm font-bold transition-all duration-300 {{ request()->routeIs('submit-event.form') ? 'text-red-600' : 'text-slate-600 hover:text-red-500' }}">
-                        Submit Event
-                        </a>
+                        {{-- Form Submit Event (Hanya untuk EO & Admin) --}}
+                        @auth
+                            @if(auth()->user()->hasRole('eo') || auth()->user()->hasRole('admin'))
+                                <a href="{{ route('submit-event.form') }}" 
+                                class="text-sm font-bold transition-all duration-300 {{ request()->routeIs('submit-event.form') ? 'text-red-600' : 'text-slate-600 hover:text-red-500' }}">
+                                Submit Event
+                                </a>
+                            @endif
+                        @endauth
+
                     </div>
                 </div>
 
                 <div class="hidden md:flex items-center gap-4">
                     @auth
+                        {{-- Tombol Upgrade Desktop (Di samping profil) --}}
+                        @if(auth()->user()->hasRole('user') && !auth()->user()->hasRole('eo') && !auth()->user()->hasRole('admin'))
+                            @if(auth()->user()->eo_request_status === 'none' || auth()->user()->eo_request_status === 'rejected')
+                                <!-- KODE YANG DIUBAH: Menggunakan $dispatch untuk memanggil modal -->
+                                <button @click="$dispatch('open-modal-eo')" class="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-red-600 to-pink-500 text-white text-xs font-extrabold shadow-lg shadow-pink-500/30 hover:scale-105 transition-all active:scale-95">
+                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    Upgrade EO
+                                </button>
+                            @elseif(auth()->user()->eo_request_status === 'pending')
+                                <div class="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-100 text-slate-500 text-xs font-extrabold border border-slate-200 cursor-not-allowed">
+                                    <svg class="animate-spin w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Pending...
+                                </div>
+                            @endif
+                        @endif
+
                         {{-- Dropdown Profile --}}
                         <div class="relative">
                             <button @click="profileMenu = !profileMenu" class="flex items-center gap-3 p-1 rounded-full hover:bg-slate-100 transition focus:outline-none">
@@ -66,6 +87,10 @@
                             </button>
                             <div x-show="profileMenu" @click.away="profileMenu = false" x-transition class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl shadow-slate-200/50 py-2 border border-slate-100">
                                 <a href="{{ route('profile.show') }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 font-medium">My Profile</a>
+                                
+                                {{-- KODE BARU: Tambahan Event History di Dropdown --}}
+                                <a href="{{ route('user.event.history') }}" class="block px-4 py-2 text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 font-medium">Event History</a>
+                                
                                 @if(Auth::user()->isAdmin())
                                     <a href="/admin/event-list" class="block px-4 py-2 text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 font-medium">Admin Panel</a>
                                 @endif
@@ -95,10 +120,31 @@
         <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-t border-slate-100 px-4 py-6 space-y-4 shadow-xl">
             <a href="/" class="block text-base font-bold text-slate-700">Home</a>
             <a href="/browse-events" class="block text-base font-bold text-slate-700">Events</a>
-            <a href="/submit-event" class="block text-base font-bold text-slate-700">Submit Event</a>
+            
+            {{-- Form Submit Event Mobile (Hanya untuk EO & Admin) --}}
+            @auth
+                @if(auth()->user()->hasRole('eo') || auth()->user()->hasRole('admin'))
+                    <a href="{{ route('submit-event.form') }}" class="block text-base font-bold text-slate-700">Submit Event</a>
+                @endif
+            @endauth
+
             <hr class="border-slate-100">
             @auth
+                {{-- Tombol Upgrade Mobile Menu --}}
+                @if(auth()->user()->hasRole('user') && !auth()->user()->hasRole('eo') && !auth()->user()->hasRole('admin'))
+                    @if(auth()->user()->eo_request_status === 'none' || auth()->user()->eo_request_status === 'rejected')
+                        <!-- KODE YANG DIUBAH: Menggunakan $dispatch untuk memanggil modal -->
+                        <button @click="$dispatch('open-modal-eo')" class="w-full text-left flex items-center gap-2 text-base font-extrabold text-red-600 mb-4">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            Upgrade to Event Organizer
+                        </button>
+                    @elseif(auth()->user()->eo_request_status === 'pending')
+                        <div class="w-full text-left text-base font-bold text-slate-400 mb-4">Pengajuan EO Diproses...</div>
+                    @endif
+                @endif
+
                 <a href="{{ route('profile.show') }}" class="block text-base font-bold text-red-500">My Profile</a>
+                <a href="{{ route('user.event.history') }}" class="block text-base font-bold text-slate-700">Event History</a>
                 <form action="{{ route('logout') }}" method="POST">@csrf<button type="submit" class="text-base font-bold text-slate-400">Logout</button></form>
             @else
                 <a href="{{ route('login') }}" class="block text-center py-3 rounded-xl bg-red-500 text-white font-bold">Login</a>
@@ -121,37 +167,23 @@
                 <h4 class="font-bold mb-6">Quick Links</h4>
                 <ul class="space-y-3 text-slate-400 text-sm">
                     <li><a href="/browse-events" class="hover:text-red-400 transition">Browse Events</a></li>
-                    <li><a href="/submit-event" class="hover:text-red-400 transition">Submit Event</a></li>
+                    
+                    {{-- Form Submit Event Footer (Hanya untuk EO & Admin) --}}
+                    @auth
+                        @if(auth()->user()->hasRole('eo') || auth()->user()->hasRole('admin'))
+                            <li><a href="{{ route('submit-event.form') }}" class="hover:text-red-400 transition">Submit Event</a></li>
+                        @endif
+                    @endauth
                 </ul>
             </div>
             <div>
                 <h4 class="font-bold mb-6 text-white uppercase tracking-wider text-xs">Categories</h4>
                 <ul class="space-y-3 text-slate-400 text-sm">
-                    <li>
-                        <a href="/browse-events?category=Seminar" class="hover:text-red-400 transition flex items-center group">
-                            Seminars
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/browse-events?category=Workshop" class="hover:text-red-400 transition flex items-center group">
-                            Workshops
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/browse-events?category=Competition" class="hover:text-red-400 transition flex items-center group">
-                            Competitions
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/browse-events?category=Gathering" class="hover:text-red-400 transition flex items-center group">
-                            Gatherings
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/browse-events?category=Other" class="hover:text-red-400 transition flex items-center group">
-                            Others
-                        </a>
-                    </li>
+                    <li><a href="/browse-events?category=Seminar" class="hover:text-red-400 transition flex items-center group">Seminars</a></li>
+                    <li><a href="/browse-events?category=Workshop" class="hover:text-red-400 transition flex items-center group">Workshops</a></li>
+                    <li><a href="/browse-events?category=Competition" class="hover:text-red-400 transition flex items-center group">Competitions</a></li>
+                    <li><a href="/browse-events?category=Gathering" class="hover:text-red-400 transition flex items-center group">Gatherings</a></li>
+                    <li><a href="/browse-events?category=Other" class="hover:text-red-400 transition flex items-center group">Others</a></li>
                 </ul>
             </div>
             <div>
@@ -165,30 +197,109 @@
     @include('partials.sweetalert')
     @stack('scripts')
 
-    {{-- Floating Action Button (FAB) --}}
-<div class="fixed bottom-6 right-6 z-50" x-data="{ hover: false }">
-    {{-- Tooltip yang muncul pas di-hover --}}
-    <div x-show="hover" 
-         x-transition:enter="transition ease-out duration-200"
-         x-transition:enter-start="opacity-0 translate-y-2"
-         x-transition:enter-end="opacity-100 translate-y-0"
-         x-transition:leave="transition ease-in duration-150"
-         x-transition:leave-start="opacity-100 translate-y-0"
-         x-transition:leave-end="opacity-0 translate-y-2"
-         class="absolute bottom-full mb-3 right-0 whitespace-nowrap bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-xl" x-cloak>
-        Need Help? Contact Us
-    </div>
+    {{-- ========================================== --}}
+    {{-- MODAL FORMULIR UPGRADE EO (Light Theme)    --}}
+    {{-- ========================================== --}}
+    @auth
+        @if(auth()->user()->hasRole('user') && !auth()->user()->hasRole('eo') && !auth()->user()->hasRole('admin'))
+            <div x-data="{ openEoModal: false }" 
+                 @open-modal-eo.window="openEoModal = true"
+                 x-show="openEoModal" 
+                 class="fixed inset-0 z-[100] flex items-center justify-center w-full h-full bg-slate-900/40 backdrop-blur-sm p-4" 
+                 x-cloak>
+                 
+                <div @click.away="openEoModal = false" 
+                     x-show="openEoModal"
+                     x-transition:enter="transition ease-out duration-300"
+                     x-transition:enter-start="opacity-0 translate-y-8 scale-95"
+                     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                     x-transition:leave-end="opacity-0 translate-y-8 scale-95"
+                     class="bg-white border border-slate-100 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl relative overflow-hidden text-left max-h-[90vh] overflow-y-auto scrollbar-hide">
+                    
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-600 to-pink-500"></div>
 
-    {{-- Tombol Utama --}}
-    <a href="{{ route('contact') }}" 
-   @mouseenter="hover = true" 
-   @mouseleave="hover = false"
-   class="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-pink-500 text-white shadow-lg shadow-pink-500/40 transition-all duration-300 hover:scale-110 hover:-rotate-12 active:scale-95 group">
-    
-    <svg class="w-7 h-7 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-    </svg>
-</a>
-</div>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center shrink-0">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-extrabold text-slate-900">Formulir Verifikasi EO</h3>
+                            <p class="text-slate-500 text-xs font-medium">Lengkapi data untuk mendapatkan hak akses.</p>
+                        </div>
+                    </div>
+                    
+                    <form action="{{ route('user.request-eo') }}" method="POST" class="space-y-4">
+                        @csrf
+                        
+                        {{-- Tipe Organisasi --}}
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tipe Penyelenggara <span class="text-red-500">*</span></label>
+                            <select name="eo_org_type" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm font-medium text-slate-700 outline-none">
+                                <option value="" disabled selected>-- Pilih Tipe --</option>
+                                <option value="Internal Kampus">Internal Kampus (Himpunan/UKM/BEM)</option>
+                                <option value="Eksternal Publik">Eksternal Publik (Umum/Sponsor)</option>
+                            </select>
+                        </div>
+
+                        {{-- Nama Organisasi --}}
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nama Organisasi / Instansi <span class="text-red-500">*</span></label>
+                            <input type="text" name="eo_org_name" required placeholder="Contoh: HMIF Telkom" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm font-medium text-slate-700 outline-none">
+                        </div>
+
+                        {{-- Nama PIC --}}
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nama Penanggung Jawab <span class="text-red-500">*</span></label>
+                            <input type="text" name="eo_pic_name" required value="{{ Auth::user()->name }}" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm font-medium text-slate-700 outline-none">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {{-- Nomor WA --}}
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nomor WhatsApp <span class="text-red-500">*</span></label>
+                                <input type="text" name="eo_phone" required placeholder="0812xxxx" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm font-medium text-slate-700 outline-none">
+                            </div>
+                            
+                            {{-- Akun IG --}}
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Akun Instagram</label>
+                                <input type="text" name="eo_instagram" placeholder="@namainstagram" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm font-medium text-slate-700 outline-none">
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex flex-col-reverse sm:flex-row justify-end gap-3 border-t border-slate-100 mt-6">
+                            <button type="button" @click="openEoModal = false" class="w-full sm:w-auto px-6 py-2.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl font-bold transition">Batal</button>
+                            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-red-600 to-pink-500 text-white rounded-xl font-bold shadow-lg shadow-pink-500/25 hover:scale-105 transition active:scale-95">Kirim Pengajuan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
+    @endauth
+    {{-- Floating Action Button (FAB) Contact Us --}}
+    <div class="fixed bottom-6 right-6 z-50" x-data="{ hover: false }">
+        <div x-show="hover" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-2"
+             class="absolute bottom-full mb-3 right-0 whitespace-nowrap bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-xl" x-cloak>
+            Need Help? Contact Us
+        </div>
+
+        <a href="{{ route('contact') }}" 
+       @mouseenter="hover = true" 
+       @mouseleave="hover = false"
+       class="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-pink-500 text-white shadow-lg shadow-pink-500/40 transition-all duration-300 hover:scale-110 hover:-rotate-12 active:scale-95 group">
+        
+        <svg class="w-7 h-7 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+        </svg>
+    </a>
+    </div>
 </body>
 </html>

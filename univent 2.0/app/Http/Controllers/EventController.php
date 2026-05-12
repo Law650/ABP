@@ -309,24 +309,71 @@ class EventController extends Controller
 
     public function browse(Request $request): View 
     {
+        // 1. Tangkap semua input dari form (Search, Kategori, Organizer)
         $search = $request->query('search'); 
+        $category = $request->query('category');
+        $organizer = $request->query('organizer');
+
         $recommendedEvents = collect(); 
         $isPersonalized = false; 
 
-        // 1. QUERY SEMUA EVENT (Terapkan Filter Pencarian)
-        $eventsQuery = Event::where('status', 'approved')
-            ->where('end_date', '>=', today());
+        // Daftar kategori utama (untuk logika "Other")
+        $mainCategories = ['Seminar', 'Workshop', 'Competition', 'Gathering'];
 
-        if ($search) {
-            $eventsQuery->where(function ($query) use ($search) {
-                $query->where('event_title', 'LIKE', "%{$search}%")
+        /**
+         * FUNGSI PENYARING (CLOSURE)
+         * Kita buat fungsi ini agar filter Search, Category, dan Organizer 
+         * bisa langsung diterapkan ke Main Query, Recommended, maupun Cold Start 
+         * tanpa harus menulis ulang kode if-else berkali-kali.
+         */
+        /**
+         * FUNGSI PENYARING (CLOSURE)
+         */
+        $applyFilters = function ($query) use ($search, $category, $organizer, $mainCategories) {
+            // A. Filter Search Bar
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('event_title', 'LIKE', "%{$search}%")
                       ->orWhere('event_location', 'LIKE', "%{$search}%")
                       ->orWhere('event_description', 'LIKE', "%{$search}%");
-            });
-        }
+                });
+            }
+
+            // B. Filter Kategori (Perbaikan berdasarkan category_id)
+            if ($category) {
+                if ($category === 'Other') {
+                    // 1. Cari tahu ID dari kategori utama (Seminar, Workshop, dll)
+                    $mainCatIds = \App\Models\Category::whereIn('name', $mainCategories)->pluck('id');
+                    // 2. Singkirkan event yang memiliki ID tersebut
+                    $query->whereNotIn('category_id', $mainCatIds);
+                } else {
+                    // Cari ID dari kategori spesifik yang dicari user
+                    $catId = \App\Models\Category::where('name', $category)->value('id');
+                    $query->where('category_id', $catId);
+                }
+            }
+
+            // C. Filter Organizer
+            if ($organizer) {
+                $query->where('organizer_type', $organizer);
+            }
+        };
+
+
+        // ==========================================
+        // 1. QUERY SEMUA EVENT UTAMA
+        // ==========================================
+        $eventsQuery = Event::where('status', 'approved')
+            ->where('end_date', '>=', today());
+            
+        $applyFilters($eventsQuery); // Terapkan saringan
+        
         $events = $eventsQuery->latest()->get();
 
-        // 2. QUERY REKOMENDASI FYP (Berdasarkan IP dan User Agent)
+
+        // ==========================================
+        // 2. QUERY REKOMENDASI FYP (Personalisasi)
+        // ==========================================
         $ipAddress = $request->ip();
         $userAgent = $request->userAgent();
 
@@ -345,15 +392,9 @@ class EventController extends Controller
             $recommendedQuery = Event::where('status', 'approved')
                 ->whereIn('category_id', $topCategories)
                 ->where('end_date', '>=', today())
-                ->withCount('clicks'); // Tambahkan count clicks agar bisa dihitung poinnya
+                ->withCount('clicks'); 
 
-            if ($search) {
-                $recommendedQuery->where(function ($query) use ($search) {
-                    $query->where('event_title', 'LIKE', "%{$search}%")
-                          ->orWhere('event_location', 'LIKE', "%{$search}%")
-                          ->orWhere('event_description', 'LIKE', "%{$search}%");
-                });
-            }
+            $applyFilters($recommendedQuery); // Terapkan saringan
 
             // Terapkan Kalkulator Poin pada hasil Personalisasi
             $recommendedEvents = $recommendedQuery->get()->map(function ($event) {
@@ -377,19 +418,16 @@ class EventController extends Controller
             }
         }
 
-        // 3. COLD START (Jika belum ada klik, gunakan algoritma Poin)
+
+        // ==========================================
+        // 3. COLD START (Algoritma Trending)
+        // ==========================================
         if ($recommendedEvents->isEmpty()) {
             $coldStartQuery = Event::where('status', 'approved')
                 ->where('end_date', '>=', today())
                 ->withCount('clicks'); 
             
-            if ($search) {
-                $coldStartQuery->where(function ($query) use ($search) {
-                    $query->where('event_title', 'LIKE', "%{$search}%")
-                          ->orWhere('event_location', 'LIKE', "%{$search}%")
-                          ->orWhere('event_description', 'LIKE', "%{$search}%");
-                });
-            }
+            $applyFilters($coldStartQuery); // Terapkan saringan
 
             // Terapkan Kalkulator Poin pada Cold Start
             $recommendedEvents = $coldStartQuery->get()->map(function ($event) {

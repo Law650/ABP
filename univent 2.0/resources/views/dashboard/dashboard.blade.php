@@ -18,9 +18,15 @@
             <a href="/browse-events" class="px-8 py-4 bg-gradient-to-r from-red-600 to-pink-500 text-white font-bold rounded-2xl shadow-xl shadow-pink-500/25 hover:scale-105 transition transform active:scale-95">
                 Browse Events
             </a>
-            <a href="{{ route('submit-event') }}" class="px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl border border-slate-200 shadow-sm hover:bg-slate-50 transition transform active:scale-95">
-                Submit Event
-            </a>
+            
+            {{-- Tombol Submit Event di Hero (Hanya untuk EO & Admin) --}}
+            @auth
+                @if(auth()->user()->hasRole('eo') || auth()->user()->hasRole('admin'))
+                    <a href="{{ route('submit-event.form') }}" class="px-8 py-4 bg-white text-slate-900 font-bold rounded-2xl border border-slate-200 shadow-sm hover:bg-slate-50 transition transform active:scale-95">
+                        Submit Event
+                    </a>
+                @endif
+            @endauth
         </div>
     </div>
 </section>
@@ -163,10 +169,15 @@
                         Sepertinya semua sedang bersiap. Yuk, jadi yang pertama membuat event seru di kampus!
                     </p>
 
-                    <a href="{{ route('submit-event') }}" class="inline-flex items-center gap-2 px-8 py-4 bg-white border-2 border-red-500 text-red-500 font-bold rounded-2xl hover:bg-red-500 hover:text-white transition-all duration-300 shadow-lg shadow-red-500/10 active:scale-95 group">
-                        <svg class="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                        Mulai Buat Event
-                    </a>
+                    {{-- Tombol Mulai Buat Event (Hanya untuk EO & Admin) --}}
+                    @auth
+                        @if(auth()->user()->hasRole('eo') || auth()->user()->hasRole('admin'))
+                            <a href="{{ route('submit-event.form') }}" class="inline-flex items-center gap-2 px-8 py-4 bg-white border-2 border-red-500 text-red-500 font-bold rounded-2xl hover:bg-red-500 hover:text-white transition-all duration-300 shadow-lg shadow-red-500/10 active:scale-95 group">
+                                <svg class="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Mulai Buat Event
+                            </a>
+                        @endif
+                    @endauth
                 </div>
             @endforelse
         @endif

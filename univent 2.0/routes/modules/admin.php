@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\EventListController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProfileController;
 
 // Semua route admin pakai prefix “admin” + middleware auth & admin
 Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
@@ -24,4 +25,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // delete event
     Route::delete('/admin/events/{id}/delete', [App\Http\Controllers\Admin\EventListController::class, 'delete'])
         ->name('admin.events.delete');
+    
+    Route::get('/eo-requests', [ProfileController::class, 'adminEoRequestList'])->name('admin.eo-requests');
+    Route::post('/eo-requests/{id}/approve', [ProfileController::class, 'approveEoRequest'])->name('admin.eo-requests.approve');
+    Route::post('/eo-requests/{id}/reject', [ProfileController::class, 'rejectEoRequest'])->name('admin.eo-requests.reject');
 });

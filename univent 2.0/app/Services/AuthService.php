@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\Role; // Tambahan: Import model Role
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -43,7 +44,14 @@ class AuthService
             'is_active' => false,
         ]);
 
-        $user->assignRole('user');
+        // ----------------------------------------------------
+        // KODE BARU: Menghubungkan akun baru dengan Role 'user'
+        // ----------------------------------------------------
+        $roleUser = Role::where('name', 'user')->first();
+        if ($roleUser) {
+            $user->roles()->attach($roleUser->id);
+        }
+        
         $user->profile()->create();
 
         $this->otpService->generateAndSend($user);
@@ -155,7 +163,14 @@ class AuthService
                     'is_active' => true,
                 ]);
 
-                $user->assignRole('user');
+                // ----------------------------------------------------
+                // KODE BARU: Menghubungkan akun Google dengan Role 'user'
+                // ----------------------------------------------------
+                $roleUser = Role::where('name', 'user')->first();
+                if ($roleUser) {
+                    $user->roles()->attach($roleUser->id);
+                }
+
                 $user->profile()->create();
             } else {
                 $updateData = [

@@ -11,4 +11,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
     Route::delete('/profile/avatar', [ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
+
+    // Rute untuk memproses klik tombol "Ajukan Diri Sebagai EO"
+    Route::post('/request-eo-access', [ProfileController::class, 'requestEoAccess'])->name('user.request-eo');
+        
 });

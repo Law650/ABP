@@ -125,7 +125,7 @@
                                             <x-heroicon-o-magnifying-glass class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                                             
                                             {{-- Input Search --}}
-                                            <input type="text" x-ref="searchInput" x-model="search" placeholder="Search category..." 
+                                            <input type="text" x-ref="searchInput" x-model="search" placeholder="Search categories..." 
                                                 class="w-full rounded-full border border-slate-200 bg-slate-50 py-2.5 pl-11 pr-12 text-sm text-slate-700 outline-none focus:border-red-400 focus:ring-0 focus:ring-red-400/20 transition-all placeholder:text-slate-400">
                                             
                                             {{-- Tombol Plus Pink Heroicon (Muncul jika tidak ditemukan) --}}

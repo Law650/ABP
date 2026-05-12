@@ -15,57 +15,93 @@
             <p class="text-slate-500 font-medium max-w-lg mx-auto">Discover exciting events happening at Telkom University Purwokerto</p>
         </div>
 
-        {{-- Filter & Search Bar --}}
-        <div class="bg-white p-4 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 mb-12 flex flex-col lg:flex-row items-center gap-4">
-            
-            {{-- Search Input (SUDAH DIUBAH JADI FORM GET) --}}
-            <form action="{{ url()->current() }}" method="GET" class="relative w-full lg:flex-1 group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg class="w-5 h-5 text-slate-400 group-focus-within:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+        {{-- Filter & Search Bar (DIJADIKAN SATU FORM BESAR DENGAN ID) --}}
+        <div class="bg-white p-4 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/40 mb-12">
+            <form id="filterForm" action="{{ url()->current() }}" method="GET" class="flex flex-col lg:flex-row items-center gap-4 w-full">
+                
+                {{-- Search Input Utama --}}
+                <div class="relative w-full lg:flex-1 group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-slate-400 group-focus-within:text-red-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari judul, lokasi, atau deskripsi..." 
+                        class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:ring-0 focus:ring-red-400 focus:border-red-400 transition-all outline-none">
                 </div>
-                {{-- name="search" dan value="{{ request('search') }}" ditambahkan --}}
-                <input type="text" name="search" value="{{ request('search') }}" id="event-search" placeholder="Cari judul, lokasi, atau deskripsi..." 
-                    class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-red-400 focus:border-red-400 transition-all outline-none">
+
+                {{-- KATEGORI FILTER (Alpine.js dengan Fitur Search) --}}
+                <div class="relative w-full lg:w-52 group" x-data="{ 
+                        open: false, 
+                        search: '', 
+                        selected: '{{ request('category') ?: 'All Categories' }}',
+                        options: ['All Categories', 'Seminar', 'Workshop', 'Competition', 'Gathering', 'Other']
+                    }">
+                    
+                    {{-- Input hidden dikirim ke Controller --}}
+                    <input type="hidden" name="category" :value="selected === 'All Categories' ? '' : selected">
+                    
+                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-5 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 hover:border-red-300 transition-all">
+                        <span x-text="selected"></span>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" class="absolute z-30 mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden flex flex-col" x-cloak>
+                        
+                        {{-- Fitur Search Bar Kategori (Mirip Select2) --}}
+                        <div class="p-2 border-b border-slate-100">
+                            <input type="text" x-model="search" placeholder="Search categories..." class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-red-400 transition-all" @click.stop>
+                        </div>
+
+                        {{-- Daftar Kategori --}}
+                        <div class="max-h-48 overflow-y-auto py-1">
+                            <template x-for="cat in options.filter(i => i.toLowerCase().includes(search.toLowerCase()))" :key="cat">
+                                {{-- Gunakan $nextTick agar input hidden ter-update sebelum disubmit --}}
+                                <button type="button" @click="selected = cat; open = false; $nextTick(() => { document.getElementById('filterForm').submit(); })" 
+                                    class="w-full text-left px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                    <span x-text="cat"></span>
+                                </button>
+                            </template>
+                            
+                            {{-- Jika kategori tidak ditemukan --}}
+                            <div x-show="options.filter(i => i.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-5 py-3 text-sm text-slate-400 text-center font-medium">
+                                Tidak ditemukan
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ORGANIZER FILTER (Sudah punya fitur auto-submit sekarang) --}}
+                <div class="relative w-full lg:w-52 group" x-data="{ 
+                        open: false, 
+                        selected: '{{ request('organizer') ?: 'All Organizers' }}' 
+                    }">
+                    <input type="hidden" name="organizer" :value="selected === 'All Organizers' ? '' : selected">
+                    
+                    <button type="button" @click="open = !open" class="w-full flex items-center justify-between px-5 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 hover:border-red-300 transition-all">
+                        <span x-text="selected"></span>
+                        <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" class="absolute z-30 mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl py-2 overflow-hidden" x-cloak>
+                        @foreach(['All Organizers', 'Student Association', 'Lecturer', 'External'] as $org)
+                            <button type="button" @click="selected = '{{ $org }}'; open = false; $nextTick(() => { document.getElementById('filterForm').submit(); })" 
+                                class="w-full text-left px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                {{ $org }}
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Tombol Submit Tersembunyi (Untuk search bar utama trigger Enter) --}}
                 <button type="submit" class="hidden"></button>
+
+                {{-- Clear/Reset Button --}}
+                <a href="{{ url()->current() }}" class="w-full lg:w-auto px-6 py-3.5 bg-slate-900 text-white font-bold rounded-2xl hover:bg-red-600 transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    <span>Reset</span>
+                </a>
             </form>
-
-            {{-- Category Filter --}}
-            <div class="relative w-full lg:w-48 group" x-data="{ open: false, selected: 'All Categories' }">
-                <button @click="open = !open" class="w-full flex items-center justify-between px-5 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 hover:border-red-300 transition-all">
-                    <span x-text="selected">All Categories</span>
-                    <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="open" @click.away="open = false" class="absolute z-30 mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl py-2 overflow-hidden" x-cloak>
-                    @foreach(['All Categories', 'Seminar', 'Workshop', 'Competition', 'Gathering', 'Other'] as $cat)
-                        <button @click="selected = '{{ $cat }}'; open = false" class="w-full text-left px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
-                            {{ $cat }}
-                        </button>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Organizer Filter --}}
-            <div class="relative w-full lg:w-48 group" x-data="{ open: false, selected: 'All Organizers' }">
-                <button @click="open = !open" class="w-full flex items-center justify-between px-5 py-3.5 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-700 hover:border-red-300 transition-all">
-                    <span x-text="selected">All Organizers</span>
-                    <svg class="w-4 h-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="open" @click.away="open = false" class="absolute z-30 mt-2 w-full bg-white border border-slate-100 rounded-2xl shadow-xl py-2 overflow-hidden" x-cloak>
-                    @foreach(['All Organizers', 'Student Association', 'Lecturer', 'External'] as $org)
-                        <button @click="selected = '{{ $org }}'; open = false" class="w-full text-left px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors">
-                            {{ $org }}
-                        </button>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Clear Button (SUDAH DIUBAH JADI LINK RESET) --}}
-            <a href="{{ url()->current() }}" class="w-full lg:w-auto px-6 py-3.5 bg-slate-900 text-white font-bold rounded-2xl hover:bg-red-600 transition-all flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                <span>Reset</span>
-            </a>
         </div>
 
         {{-- ========================================== --}}
@@ -109,7 +145,6 @@
                                 <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-6">{{ $event->event_description }}</p>
                                 
                                 <div class="space-y-3 mb-8">
-                                    {{-- JUMLAH PENDAFTAR (Hanya muncul jika bukan personalized/sedang di mode trending) --}}
                                     @if(!isset($isPersonalized) || !$isPersonalized)
                                     <div class="flex items-center gap-3 text-slate-500">
                                         <div class="p-2 bg-orange-50 rounded-lg text-orange-500">
@@ -142,7 +177,7 @@
                 </div>
             </div>
 
-            {{-- Divider text untuk memisahkan rekomendasi dan semua event --}}
+            {{-- Divider text --}}
             <div class="flex items-center justify-center gap-4 mb-10">
                 <div class="h-px bg-slate-200 w-full max-w-[200px]"></div>
                 <h2 class="text-lg font-bold text-slate-400 uppercase tracking-widest">Semua Event</h2>
@@ -155,10 +190,7 @@
         {{-- ========================================== --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="events-container">
             @forelse ($events as $event)
-                <div class="group bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 transform hover:-translate-y-2"
-                     data-category="{{ $event->event_category }}"
-                     data-organizer="{{ $event->organizer_type }}">
-                    
+                <div class="group bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-300 transform hover:-translate-y-2">
                     {{-- Poster --}}
                     <div class="h-52 relative overflow-hidden bg-slate-200">
                         <img src="data:image/jpeg;base64,{{ $event->event_poster }}" class="h-full w-full object-cover group-hover:scale-110 transition duration-500">
@@ -205,7 +237,7 @@
                         </div>
                     </div>
                     <h3 class="text-xl font-bold text-slate-900 mb-2">Pencarian Tidak Ditemukan</h3>
-                    <p class="text-sm text-slate-500 max-w-xs mx-auto">Kami tidak dapat menemukan event dengan kata kunci "{{ request('search') }}". Coba gunakan kata kunci lain.</p>
+                    <p class="text-sm text-slate-500 max-w-xs mx-auto">Kami tidak dapat menemukan event dengan kriteria pencarian Anda. Coba gunakan kata kunci lain.</p>
                 </div>
             @endforelse
         </div>

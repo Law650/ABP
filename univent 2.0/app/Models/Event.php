@@ -11,6 +11,8 @@ class Event extends Model
     // 1. Fillable sudah disesuaikan dengan struktur database Tahap 1
     protected $fillable = [
         'event_organizer_id', // Menggantikan user_id & organizer_name
+        'organizer_type',
+        'organizer_name',
         'category_id',        // Menggantikan event_category
         'event_title',
         'event_description',

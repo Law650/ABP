@@ -14,7 +14,7 @@ class EventOrganizer extends Model
     // Relasi: EO ini milik satu User
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     // Relasi: Satu EO bisa memiliki banyak Event

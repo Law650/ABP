@@ -52,7 +52,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'otp_expires_at',
         'is_active',
         'email_verified_at',
-        'remember_token'
+        'remember_token',
+        'eo_request_status',
+        'eo_org_type',
+        'eo_org_name',
+        'eo_pic_name',
+        'eo_phone',
+        'eo_instagram',
     ];
 
     /**

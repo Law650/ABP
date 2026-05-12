@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Notifications\EventStatusNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View; // Wajib untuk Return Type
@@ -71,6 +72,9 @@ class EventListController extends Controller
                     ]);
                 }
             }
+            if ($event->eventOrganizer &&  $event->eventOrganizer->user) {
+                $event->eventOrganizer->user->notify(new EventStatusNotification($event, 'approved'));
+            }
         });
         // -----------------------------------------------------------------------------------
 
@@ -90,6 +94,9 @@ class EventListController extends Controller
             EventRegistration::where('event_id', $event->id)->update([
                 'status' => 'rejected',
             ]);
+            if ($event->eventOrganizer &&  $event->eventOrganizer->user) {
+                $event->eventOrganizer->user->notify(new EventStatusNotification($event, 'rejected'));
+            }
         });
         // -----------------------------------------------------------------------------------
 
@@ -100,8 +107,8 @@ class EventListController extends Controller
     // Detail event untuk admin
     public function show(int $id): View
     {
-        // Load relasi registrations dan user
-        $event = Event::with('registrations', 'user')->findOrFail($id);
+        // Load relasi registrations dan eventOrganizer beserta user
+        $event = Event::with(['registrations', 'eventOrganizer.user', 'category'])->findOrFail($id);
 
         return view('admin.event-detail', compact('event'));
     }
